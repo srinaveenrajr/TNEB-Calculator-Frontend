@@ -11,7 +11,7 @@ export default function ConsumptionHistoryTableFrozen({ rows }) {
   return (
     <div className="bg-white p-5 border-4 border-black shadow-2xl h-fit w-full max-w-[850px]">
       {list.length > 0 && (
-        <div className="bg-black text-white p-5 mb-4 flex justify-center gap-[100px] items-center border-b-8 border-yellow-400">
+        <div className="bg-black text-white p-5 mb-4 flex justify-center gap-4 sm:gap-[100px] items-center border-b-8 border-yellow-400">
           <div>
             <p className="text-[10px] uppercase font-bold text-gray-400 mb-2">
               Total Units
@@ -30,7 +30,7 @@ export default function ConsumptionHistoryTableFrozen({ rows }) {
           </div>
         </div>
       )}
-      <div className="flex justify-center items-center">
+      <div className="flex w-full items-center justify-center overflow-x-auto">
         <table className=" text-[8px] md:text-[15px] w-full border-collapse border-4 border-black text-xs font-bold text-center uppercase">
           <thead className="bg-yellow-400 font-black italic">
             <tr>

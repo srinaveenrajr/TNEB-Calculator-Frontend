@@ -28,45 +28,58 @@ export default function DashboardHistorySection({
 }) {
   const captureRef = useRef(null);
 
+  const inlineComputedStyles = (sourceNode, targetNode) => {
+    if (!(sourceNode instanceof Element) || !(targetNode instanceof Element)) return;
+    const computed = window.getComputedStyle(sourceNode);
+    for (let i = 0; i < computed.length; i += 1) {
+      const prop = computed[i];
+      targetNode.style.setProperty(
+        prop,
+        computed.getPropertyValue(prop),
+        computed.getPropertyPriority(prop),
+      );
+    }
+    const sourceChildren = sourceNode.children;
+    const targetChildren = targetNode.children;
+    for (let i = 0; i < sourceChildren.length; i += 1) {
+      inlineComputedStyles(sourceChildren[i], targetChildren[i]);
+    }
+  };
+
   const sendWhatsApp = async () => {
     const el = captureRef.current;
     if (!el) return;
+    let clonedNode = null;
     try {
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
       await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
-      // Scroll to top to prevent scroll-related offset issues
-      const originalScrollPos = window.scrollY;
-      window.scrollTo(0, 0);
+      clonedNode = el.cloneNode(true);
+      inlineComputedStyles(el, clonedNode);
+      clonedNode.style.position = "fixed";
+      clonedNode.style.left = "0";
+      clonedNode.style.top = "0";
+      clonedNode.style.zIndex = "-1";
+      clonedNode.style.pointerEvents = "none";
+      clonedNode.style.opacity = "1";
+      clonedNode.style.transform = "none";
+      clonedNode.style.width = "850px";
+      document.body.appendChild(clonedNode);
 
-      const canvas = await html2canvas(el, {
+      const canvas = await html2canvas(clonedNode, {
         scale: 2,
         useCORS: true,
-        // scrollY: -window.scrollY, // Not needed if we scrollTo(0,0)
+        allowTaint: true,
         windowWidth: 850,
         width: 850,
-        // REMOVE THESE TWO LINES:
-        // windowHeight: el.scrollHeight,
-        // height: el.offsetHeight,
+        windowHeight: clonedNode.offsetHeight,
+        height: clonedNode.offsetHeight,
         backgroundColor: "#ffffff",
         logging: false,
-        onclone: (clonedDoc) => {
-          const tables = clonedDoc.querySelectorAll("table");
-          tables.forEach((t) => {
-            t.style.tableLayout = "fixed";
-            t.style.width = "100%";
-          });
-          const cells = clonedDoc.querySelectorAll("td, th");
-          cells.forEach((c) => {
-            c.style.whiteSpace = "nowrap";
-            c.style.padding = "10px 16px";
-          });
-        },
       });
-
-      // Restore scroll position
-      window.scrollTo(0, originalScrollPos);
-
-      // ... rest of your logic
 
       const blob = await new Promise((resolve) =>
         canvas.toBlob(resolve, "image/png"),
@@ -91,6 +104,10 @@ export default function DashboardHistorySection({
       }
     } catch {
       showToast("Screenshot failed", "error");
+    } finally {
+      if (clonedNode?.parentNode) {
+        clonedNode.parentNode.removeChild(clonedNode);
+      }
     }
   };
 
@@ -199,7 +216,7 @@ export default function DashboardHistorySection({
           {/* Hidden capture: latest 5 rows only */}
           <div
             ref={captureRef}
-            className="pointer-events-none fixed left-[9999px] top-0 isolate"
+            className="pointer-events-none fixed left-0 top-0 isolate opacity-0"
             style={{ width: "850px" }}
             aria-hidden
           >
