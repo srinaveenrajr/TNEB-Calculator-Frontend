@@ -23,7 +23,9 @@ export const initUserSlabs = createAsyncThunk(
       await api.post("/tables/user/init");
       await dispatch(fetchUserSlabs(userId)).unwrap();
     } catch (e) {
-      return rejectWithValue(e.response?.data?.error || e.message || "Init failed");
+      return rejectWithValue(
+        e.response?.data?.error || e.message || "Init failed",
+      );
     }
   },
 );
@@ -43,7 +45,9 @@ export const saveUserSlabs = createAsyncThunk(
       await api.post("/tables/save", payload);
       await dispatch(fetchUserSlabs(userId)).unwrap();
     } catch (e) {
-      return rejectWithValue(e.response?.data?.error || e.message || "Save failed");
+      return rejectWithValue(
+        e.response?.data?.error || e.message || "Save failed",
+      );
     }
   },
 );
@@ -55,7 +59,9 @@ export const deleteUserSlabRow = createAsyncThunk(
       await api.delete(`/tables/${id}`);
       await dispatch(fetchUserSlabs(userId)).unwrap();
     } catch (e) {
-      return rejectWithValue(e.response?.data?.error || e.message || "Delete failed");
+      return rejectWithValue(
+        e.response?.data?.error || e.message || "Delete failed",
+      );
     }
   },
 );
@@ -95,4 +101,3 @@ const slabsSlice = createSlice({
 });
 
 export default slabsSlice.reducer;
-

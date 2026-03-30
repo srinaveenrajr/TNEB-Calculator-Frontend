@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = "http://localhost:5000";
+const API = "https://tneb-calculator-backend.onrender.com";
 
 export const api = axios.create({
   baseURL: API,
