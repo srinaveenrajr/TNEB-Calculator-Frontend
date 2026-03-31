@@ -2,15 +2,42 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <link rel="icon" type="image/png" href="/logo.png" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>TN PowerLog – TNEB Bill Calculator & Electricity Dashboard</title>
+
+    <meta
+      name="description"
+      content="TN PowerLog is a powerful dashboard to calculate TNEB electricity bills, track usage history, and customize slab rates for users across different states. Easily analyze your power consumption and share bill details via WhatsApp."
+    />
+
+    <meta
+      name="keywords"
+      content="TNEB bill calculator, electricity calculator Tamil Nadu, EB units calculator, power consumption tracker, TN EB slab rates"
+    />
+
+    <meta name="theme-color" content="#0f172a" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="TN PowerLog" />
+    <meta
+      property="og:description"
+      content="Calculate TNEB bills, track usage, and manage slab rates easily."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/logo.png" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap"
       rel="stylesheet"
     />
-    <title>EB Toolkit · Meter & slabs</title>
+
     <script>
       try {
         if (localStorage.getItem("eb-theme") === "dark") {
@@ -19,6 +46,7 @@
       } catch (_) {}
     </script>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>

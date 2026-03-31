@@ -21,7 +21,7 @@ export const initUserSlabs = createAsyncThunk(
   async (userId, { dispatch, rejectWithValue }) => {
     try {
       await api.post("/tables/user/init");
-      await dispatch(fetchUserSlabs(userId)).unwrap();
+      return await dispatch(fetchUserSlabs(userId)).unwrap();
     } catch (e) {
       return rejectWithValue(
         e.response?.data?.error || e.message || "Init failed",
@@ -43,7 +43,7 @@ export const saveUserSlabs = createAsyncThunk(
         })),
       };
       await api.post("/tables/save", payload);
-      await dispatch(fetchUserSlabs(userId)).unwrap();
+      return await dispatch(fetchUserSlabs(userId)).unwrap();
     } catch (e) {
       return rejectWithValue(
         e.response?.data?.error || e.message || "Save failed",
@@ -57,7 +57,7 @@ export const deleteUserSlabRow = createAsyncThunk(
   async ({ userId, id }, { dispatch, rejectWithValue }) => {
     try {
       await api.delete(`/tables/${id}`);
-      await dispatch(fetchUserSlabs(userId)).unwrap();
+      return await dispatch(fetchUserSlabs(userId)).unwrap();
     } catch (e) {
       return rejectWithValue(
         e.response?.data?.error || e.message || "Delete failed",

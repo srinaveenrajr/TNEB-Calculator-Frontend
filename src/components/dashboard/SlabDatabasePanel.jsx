@@ -1,12 +1,14 @@
 import React, { useState } from "react";
-import { api } from "../../api/client";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUserSlabs } from "../../store/slabsSlice";
+import TableSkeleton from "../skeletons/TableSkeleton";
+import {
+  fetchUserSlabs,
+  initUserSlabs,
+  saveUserSlabs,
+  deleteUserSlabRow,
+} from "../../store/slabsSlice";
 
-export default function SlabDatabasePanel({
-  showToast,
-  isDark,
-}) {
+export default function SlabDatabasePanel({ showToast }) {
   const dispatch = useDispatch();
   const user = useSelector((s) => s.auth.user);
   const dbRows = useSelector((s) => s.slabs.items);
@@ -15,7 +17,6 @@ export default function SlabDatabasePanel({
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState([]);
-  const [saving, setSaving] = useState(false);
 
   const addEmptyRow = () => {
     setDraft((prev) => [
@@ -30,24 +31,21 @@ export default function SlabDatabasePanel({
   };
 
   const beginEdit = async () => {
-    setSaving(true);
     try {
-      // Create a user-specific copy on first edit.
-      const { data } = await api.post("/tables/user/init");
+      if (!user?.id) return;
+      const data = await dispatch(initUserSlabs(user.id)).unwrap();
       setDraft(
         (data || []).map((r) => ({
           _id: r._id,
           from: r.from ?? "",
           to: r.to ?? "",
-          rate: String(r.rate?.$numberDecimal ?? r.rate ?? ""),
+          rate: String(r.rate ?? ""),
           maxUnits: r.maxUnits ?? "",
         })),
       );
       setEditing(true);
     } catch (e) {
-      showToast(e.response?.data?.error || e.message || "Init failed", "error");
-    } finally {
-      setSaving(false);
+      showToast(e || "Init failed", "error");
     }
   };
 
@@ -63,54 +61,44 @@ export default function SlabDatabasePanel({
     if (!window.confirm("Delete this slab row?")) return;
     if (row?._id) {
       try {
-        await api.delete(`/tables/${row._id}`);
+        if (!user?.id) return;
+        await dispatch(
+          deleteUserSlabRow({ userId: user.id, id: row._id }),
+        ).unwrap();
         showToast("Slab deleted", "success");
         setDraft((prev) => prev.filter((_, i) => i !== index));
-        if (user?.id) await dispatch(fetchUserSlabs(user.id)).unwrap();
       } catch (e) {
-        showToast(e.response?.data?.error || "Delete failed", "error");
+        showToast(e || "Delete failed", "error");
       }
       return;
     }
-    // Unsaved (empty) draft row: delete locally only
     setDraft((prev) => prev.filter((_, i) => i !== index));
   };
 
   const saveSlabs = async () => {
-    setSaving(true);
     try {
-      await api.post("/tables/save", {
-        tables: draft.map((r) => ({
-          _id: r._id,
-          from: r.from,
-          to: r.to,
-          rate: r.rate,
-          maxUnits: r.maxUnits,
-        })),
-      });
-
+      if (!user?.id) return;
+      await dispatch(
+        saveUserSlabs({ userId: user.id, tables: draft }),
+      ).unwrap();
       showToast("Slabs saved", "success");
       setEditing(false);
-      if (user?.id) await dispatch(fetchUserSlabs(user.id)).unwrap();
     } catch (e) {
-      showToast(e.response?.data?.error || e.message || "Save failed", "error");
-    } finally {
-      setSaving(false);
+      showToast(e || "Save failed", "error");
     }
   };
 
-  const panel = isDark
-    ? "border-slate-700 bg-slate-900/60"
-    : "border-slate-200 bg-white shadow-sm";
-  const head = isDark
-    ? "border-slate-700 text-slate-300"
-    : "border-slate-100 text-slate-600";
-  const cell = isDark ? "text-slate-200" : "text-slate-800";
-  const inputCls = isDark
-    ? "w-full rounded border border-slate-600 bg-slate-800 px-2 py-1 text-center text-xs text-white outline-none focus:border-cyan-500"
-    : "w-full rounded border border-slate-200 bg-slate-50 px-2 py-1 text-center text-xs outline-none focus:border-blue-500";
+  const panel = "border-slate-200 bg-white shadow-sm";
+  const head = "border-slate-100 text-slate-600";
+  const cell = "text-slate-800";
+  const inputCls =
+    "w-full rounded border border-slate-200 bg-slate-50 px-2 py-1 text-center text-xs outline-none focus:border-blue-500";
 
   const displayRows = editing ? draft : dbRows;
+
+  if (loading && !editing && displayRows.length === 0) {
+    return <TableSkeleton rows={5} />;
+  }
 
   return (
     <div className={`rounded-2xl border ${panel} overflow-hidden`}>
@@ -118,23 +106,15 @@ export default function SlabDatabasePanel({
         className={`flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4 ${head}`}
       >
         <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest">
-          <span
-            className={`inline-block h-2 w-2 animate-pulse rounded-full ${isDark ? "bg-cyan-400" : "bg-cyan-500"}`}
-          />
-          <span className={isDark ? "text-white" : "text-slate-900"}>
-            Slab database
-          </span>
+          <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-cyan-500" />
+          <span className="text-slate-900">Slab database</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => user?.id && dispatch(fetchUserSlabs(user.id))}
             disabled={loading || editing}
-            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-              isDark
-                ? "border border-slate-600 bg-slate-800 text-slate-300 hover:border-slate-500"
-                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-            }`}
+            className="rounded-lg px-3 py-1.5 text-xs font-bold transition border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
           >
             Refresh
           </button>
@@ -142,11 +122,8 @@ export default function SlabDatabasePanel({
             <button
               type="button"
               onClick={beginEdit}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                isDark
-                  ? "border border-amber-600/50 bg-slate-800 text-amber-400 hover:bg-slate-700"
-                  : "border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
-              }`}
+              disabled={loading}
+              className="rounded-lg px-3 py-1.5 text-xs font-bold transition border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100 disabled:opacity-50"
             >
               Edit
             </button>
@@ -155,32 +132,24 @@ export default function SlabDatabasePanel({
               <button
                 type="button"
                 onClick={saveSlabs}
-                disabled={saving}
+                disabled={loading}
                 className="rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-cyan-500 disabled:opacity-50"
               >
-                {saving ? "Saving…" : "Save"}
+                {loading ? "Saving…" : "Save"}
               </button>
               <button
                 type="button"
                 onClick={addEmptyRow}
-                disabled={saving}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
-                  isDark
-                    ? "border border-emerald-600/50 bg-slate-800 text-emerald-400 hover:bg-slate-700"
-                    : "border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
-                } disabled:opacity-50`}
+                disabled={loading}
+                className="rounded-lg px-3 py-1.5 text-xs font-bold border border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
               >
                 Add Row
               </button>
               <button
                 type="button"
                 onClick={() => setEditing(false)}
-                disabled={saving}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
-                  isDark
-                    ? "bg-slate-800 text-slate-400 hover:bg-slate-700"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
+                disabled={loading}
+                className="rounded-lg px-3 py-1.5 text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -192,25 +161,17 @@ export default function SlabDatabasePanel({
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr
-              className={
-                isDark
-                  ? "border-b border-slate-800"
-                  : "border-b border-slate-100"
-              }
-            >
+            <tr className="border-b border-slate-100">
               {["From", "To", "Rate ₹", "Max"].map((h) => (
                 <th
                   key={h}
-                  className={`px-4 py-2.5 text-left font-bold uppercase tracking-widest ${isDark ? "text-slate-500" : "text-slate-500"}`}
+                  className="px-4 py-2.5 text-left font-bold uppercase tracking-widest text-slate-500"
                 >
                   {h}
                 </th>
               ))}
               {editing && (
-                <th
-                  className={`px-4 py-2.5 text-left font-bold uppercase tracking-widest ${isDark ? "text-slate-500" : "text-slate-500"}`}
-                >
+                <th className="px-4 py-2.5 text-left font-bold uppercase tracking-widest text-slate-500">
                   Del
                 </th>
               )}
@@ -221,7 +182,7 @@ export default function SlabDatabasePanel({
               <tr>
                 <td
                   colSpan={editing ? 5 : 4}
-                  className={`py-10 text-center ${isDark ? "text-slate-600" : "text-slate-400"}`}
+                  className="py-10 text-center text-slate-400"
                 >
                   No slabs
                 </td>
@@ -234,9 +195,7 @@ export default function SlabDatabasePanel({
                 return (
                   <tr
                     key={row._id || i}
-                    className={`border-b transition-colors ${
-                      isDark ? "border-slate-800" : "border-slate-100"
-                    } ${isActive ? (isDark ? "bg-cyan-950/30" : "bg-cyan-50") : isDark ? "hover:bg-slate-800/40" : "hover:bg-slate-50/80"}`}
+                    className={`border-b transition-colors border-slate-100 ${isActive ? "bg-cyan-50" : "hover:bg-slate-50/80"}`}
                   >
                     <td className={`px-4 py-2.5 ${cell}`}>
                       {editing ? (
@@ -249,13 +208,7 @@ export default function SlabDatabasePanel({
                           }
                         />
                       ) : (
-                        <span
-                          className={
-                            isDark
-                              ? "rounded border border-cyan-900 bg-cyan-950 px-2 py-0.5 font-bold text-cyan-400"
-                              : "rounded border border-cyan-100 bg-cyan-50 px-2 py-0.5 font-bold text-cyan-700"
-                          }
-                        >
+                        <span className="rounded border border-cyan-100 bg-cyan-50 px-2 py-0.5 font-bold text-cyan-700">
                           {row.from}
                         </span>
                       )}
@@ -266,25 +219,15 @@ export default function SlabDatabasePanel({
                           type="text"
                           className={inputCls}
                           value={row.to}
-                          onChange={(e) =>
-                            handleCell(i, "to", e.target.value)
-                          }
+                          onChange={(e) => handleCell(i, "to", e.target.value)}
                         />
                       ) : (
-                        <span
-                          className={
-                            isDark
-                              ? "rounded border border-violet-900 bg-violet-950 px-2 py-0.5 font-bold text-violet-400"
-                              : "rounded border border-violet-100 bg-violet-50 px-2 py-0.5 font-bold text-violet-700"
-                          }
-                        >
+                        <span className="rounded border border-violet-100 bg-violet-50 px-2 py-0.5 font-bold text-violet-700">
                           {row.to}
                         </span>
                       )}
                     </td>
-                    <td
-                      className={`px-4 py-2.5 font-bold ${isDark ? "text-amber-400" : "text-amber-700"}`}
-                    >
+                    <td className="px-4 py-2.5 font-bold text-amber-700">
                       {editing ? (
                         <input
                           type="number"
@@ -304,19 +247,13 @@ export default function SlabDatabasePanel({
                         <input
                           type="text"
                           className={inputCls}
-                              value={row.maxUnits ?? ""}
+                          value={row.maxUnits ?? ""}
                           onChange={(e) =>
-                                handleCell(i, "maxUnits", e.target.value)
+                            handleCell(i, "maxUnits", e.target.value)
                           }
                         />
                       ) : (
-                        <span
-                          className={
-                            isDark
-                              ? "rounded border border-emerald-900 bg-emerald-950 px-2 py-0.5 font-bold text-emerald-400"
-                              : "rounded border border-emerald-100 bg-emerald-50 px-2 py-0.5 font-bold text-emerald-700"
-                          }
-                        >
+                        <span className="rounded border border-emerald-100 bg-emerald-50 px-2 py-0.5 font-bold text-emerald-700">
                           {!row.maxUnits ||
                           String(row.maxUnits).toLowerCase() === "infinity"
                             ? "∞"
@@ -330,11 +267,7 @@ export default function SlabDatabasePanel({
                           type="button"
                           onClick={() => handleDelete(i, row)}
                           disabled={loading}
-                          className={`rounded-lg px-2 py-1 text-[10px] font-bold uppercase ${
-                            isDark
-                              ? "border border-red-900/60 text-red-400 hover:bg-red-950/50"
-                              : "border border-red-200 text-red-700 hover:bg-red-50"
-                          } disabled:opacity-50`}
+                          className="rounded-lg px-2 py-1 text-[10px] font-bold uppercase border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-50"
                         >
                           Delete
                         </button>

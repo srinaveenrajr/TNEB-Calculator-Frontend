@@ -11,13 +11,14 @@ import {
   Legend,
   Filler,
 } from "chart.js";
-import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import { normalizeHistoryRow } from "../utils/historyNormalize";
 import MeterCalculatorForm from "./dashboard/MeterCalculatorForm";
 import SlabDatabasePanel from "./dashboard/SlabDatabasePanel";
 import DashboardHistorySection from "./dashboard/DashboardHistorySection";
+import SlabSkeleton from "./skeletons/SlabSkeleton";
+import CardSkeleton from "./skeletons/CardSkeleton";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserSlabs } from "../store/slabsSlice";
 import { computeBillPreview } from "../store/billingSlice";
@@ -34,7 +35,6 @@ ChartJS.register(
 );
 
 export default function Newdashboard() {
-  const { isDark } = useTheme();
   const { user, refreshUser } = useAuth();
   const dispatch = useDispatch();
 
@@ -56,6 +56,10 @@ export default function Newdashboard() {
 
   const confirmationbutton = () => {
     setconfirmation(true);
+  };
+
+  const cancel = () => {
+    setconfirmation(false);
   };
 
   const showToast = useCallback((msg, type = "success") => {
@@ -142,21 +146,21 @@ export default function Newdashboard() {
       plugins: {
         legend: {
           position: "bottom",
-          labels: { color: isDark ? "#94a3b8" : "#64748b", font: { size: 11 } },
+          labels: { color: "#64748b", font: { size: 11 } },
         },
       },
       scales: {
         x: {
-          ticks: { color: isDark ? "#64748b" : "#64748b" },
-          grid: { color: isDark ? "#1e293b" : "#f1f5f9" },
+          ticks: { color: "#64748b" },
+          grid: { color: "#f1f5f9" },
         },
         y: {
-          ticks: { color: isDark ? "#64748b" : "#64748b" },
-          grid: { color: isDark ? "#1e293b" : "#f1f5f9" },
+          ticks: { color: "#64748b" },
+          grid: { color: "#f1f5f9" },
         },
       },
     }),
-    [isDark],
+    [],
   );
 
   const chartDataUnits = useMemo(
@@ -300,29 +304,15 @@ export default function Newdashboard() {
   };
 
   return (
-    <div
-      className={`min-h-[calc(100vh-var(--app-nav-h))] p-4 font-sans md:p-6 ${
-        isDark
-          ? "bg-slate-950 text-slate-100"
-          : "bg-gradient-to-b from-slate-50 to-slate-100/90 text-slate-900"
-      }`}
-    >
+    <div className="min-h-[calc(100vh-var(--app-nav-h))] p-4 font-sans md:p-6 bg-gradient-to-b from-slate-50 to-slate-100/90 text-slate-900">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="dash-animate flex flex-wrap items-center gap-4">
-          <div
-            className={`flex h-12 w-12 items-center justify-center rounded-xl text-2xl shadow-lg ${
-              isDark
-                ? "bg-gradient-to-br from-violet-600 to-cyan-400"
-                : "bg-gradient-to-br from-amber-400 to-orange-500"
-            }`}
-          >
+          <span class="text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)] text-2xl">
             ⚡
-          </div>
+          </span>
           <div>
             <h1 className="text-2xl font-black tracking-tight">EB Dashboard</h1>
-            <p
-              className={`text-xs uppercase tracking-widest ${isDark ? "text-slate-500" : "text-slate-500"}`}
-            >
+            <p className="text-xs uppercase tracking-widest text-slate-500">
               Electricity bill &amp; consumption
             </p>
           </div>
@@ -334,48 +324,58 @@ export default function Newdashboard() {
         </header>
 
         <div className="dash-animate">
-          <MeterCalculatorForm
-            reading={reading}
-            onReadingChange={setReading}
-            baseLMR={baseLMRInput}
-            onBaseLMRChange={setBaseLMRInput}
-            showBaseField={showBaseField}
-            onCalculate={calculate}
-            disabled={busy || calculating || !dbRows.length}
-            isDark={isDark}
-          />
+          {loadingSlabs && dbRows.length === 0 ? (
+            <CardSkeleton />
+          ) : (
+            <MeterCalculatorForm
+              reading={reading}
+              onReadingChange={setReading}
+              baseLMR={baseLMRInput}
+              onBaseLMRChange={setBaseLMRInput}
+              showBaseField={showBaseField}
+              onCalculate={calculate}
+              disabled={busy || calculating || !dbRows.length}
+            />
+          )}
 
-          {breakdown?.length > 0 && (
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-slate-400">
-                Slab-wise breakdown (preview)
-              </p>
-              <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-100">
-                Units: {unitsConsumed} • Bill: ₹{Number(totalBill).toFixed(2)}
-              </p>
-              <div className="mt-3 space-y-1">
-                {breakdown.map((b, idx) => (
-                  <div
-                    key={`${b.from}-${b.to}-${idx}`}
-                    className="flex justify-between text-xs"
-                  >
-                    <span className="text-slate-700 dark:text-slate-300">
-                      {b.from}–{b.to} @ ₹{Number(b.rate).toFixed(2)}
-                    </span>
-                    <span className="font-bold text-slate-900 dark:text-slate-100">
-                      {b.units} × {Number(b.rate).toFixed(2)} = ₹
-                      {Number(b.charge).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
+          {loadingSlabs ? (
+            <div className="mt-4">
+              <SlabSkeleton items={3} />
             </div>
+          ) : (
+            breakdown?.length > 0 && (
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-600">
+                  Slab-wise breakdown (preview)
+                </p>
+                <p className="mt-1 text-sm font-bold text-slate-900">
+                  Units: {unitsConsumed.toFixed(2)} • Bill: ₹
+                  {Number(totalBill).toFixed(2)}
+                </p>
+                <div className="mt-3 space-y-1">
+                  {breakdown.map((b, idx) => (
+                    <div
+                      key={`${b.from}-${b.to}-${idx}`}
+                      className="flex justify-between text-xs"
+                    >
+                      <span className="text-slate-700">
+                        {b.from}–{b.to} @ ₹{Number(b.rate).toFixed(2)}
+                      </span>
+                      <span className="font-bold text-slate-900">
+                        {b.units.toFixed(2)} × {Number(b.rate).toFixed(2)} = ₹
+                        {Number(b.charge).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
           )}
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="dash-animate lg:col-span-5">
-            <SlabDatabasePanel showToast={showToast} isDark={isDark} />
+            <SlabDatabasePanel showToast={showToast} />
           </div>
           <div className="dash-animate lg:col-span-7">
             <DashboardHistorySection
@@ -398,6 +398,8 @@ export default function Newdashboard() {
               onPhoneChange={setPhone}
               confirm={confirmationbutton}
               confirmation={confirmation}
+              cancel={cancel}
+              loading={loadingHistory}
             />
           </div>
         </div>

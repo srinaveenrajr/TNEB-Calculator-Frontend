@@ -62,10 +62,11 @@ export default function Login() {
         className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-md"
       >
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 text-2xl shadow-lg">
-            ⚡
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center text-2xl shadow-lg">
+            <img src="./logo.png" alt="PoweLogLogo" className="h-[40px]" />
           </div>
-          <h1 className="text-2xl font-black text-white">EB Toolkit</h1>
+
+          <h1 className="text-2xl font-black text-white">TN PowerLog</h1>
           <p className="mt-2 min-h-[1.75rem] text-sm text-amber-100">
             <span ref={typedRef} className="inline-block min-h-[1.25rem]" />
           </p>
@@ -91,7 +92,9 @@ export default function Login() {
             </label>
             <input
               type="password"
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              autoComplete={
+                mode === "login" ? "current-password" : "new-password"
+              }
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -121,7 +124,9 @@ export default function Login() {
           }}
           className="mt-4 w-full text-center text-sm text-slate-400 underline hover:text-white"
         >
-          {mode === "login" ? "Need an account? Register" : "Have an account? Sign in"}
+          {mode === "login"
+            ? "Need an account? Register"
+            : "Have an account? Sign in"}
         </button>
       </motion.div>
     </div>

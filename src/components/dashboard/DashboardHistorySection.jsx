@@ -2,6 +2,8 @@ import React, { useRef } from "react";
 import html2canvas from "html2canvas-pro";
 import { Line } from "react-chartjs-2";
 import ConsumptionHistoryTableFrozen from "./ConsumptionHistoryTableFrozen";
+import TableSkeleton from "../skeletons/TableSkeleton";
+import CardSkeleton from "../skeletons/CardSkeleton";
 
 /**
  * Toolbar + frozen history table + analytics charts.
@@ -26,6 +28,8 @@ export default function DashboardHistorySection({
   phone,
   confirm,
   confirmation,
+  cancel,
+  loading,
 }) {
   const captureRef = useRef(null);
 
@@ -116,8 +120,8 @@ export default function DashboardHistorySection({
   const topFive = historyNormalized.slice(0, 5);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/60">
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-3">
         {["table", "analytics"].map((t) => (
           <button
             key={t}
@@ -126,7 +130,7 @@ export default function DashboardHistorySection({
             className={`rounded-lg px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition ${
               activeTab === t
                 ? "bg-cyan-600 text-white"
-                : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
             }`}
           >
             {t === "table" ? "Consumption history" : "Analytics"}
@@ -137,28 +141,39 @@ export default function DashboardHistorySection({
       {activeTab === "table" && (
         <div className="p-4">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <div className="rounded-xl border-2 border-red-200 bg-red-50/80 px-4 py-3 dark:border-red-900 dark:bg-red-950/40">
-              <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-red-700 dark:text-red-400">
+            <div className="rounded-xl border-2 border-red-200 bg-red-50/80 px-4 py-3">
+              <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-red-700">
                 Danger zone
               </p>
               {confirmation ? (
-                <button
-                  type="button"
-                  onClick={onBillingReset}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-red-500"
-                >
-                  Reset Log
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={onBillingReset}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-red-500"
+                  >
+                    Reset Log
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancel}
+                    className="rounded-lg bg-gray-400 px-4 py-2 ml-2 text-sm font-bold text-white shadow hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
+                </>
               ) : (
-                <button
-                  type="button"
-                  onClick={confirm}
-                  className="rounded-lg bg-red-400 px-4 py-2 text-sm font-bold text-white shadow hover:bg-red-500"
-                >
-                  Do you want to reset
-                </button>
+                <div>
+                  <button
+                    type="button"
+                    onClick={confirm}
+                    className="rounded-lg bg-red-400 px-4 py-2 text-sm font-bold text-white shadow hover:bg-red-500"
+                  >
+                    Do you want to reset ?
+                  </button>
+                </div>
               )}
-              <p className="mt-2 max-w-md text-[10px] text-red-800/90 dark:text-red-200/80">
+              <p className="mt-2 max-w-md text-[10px] text-red-800/90">
                 Sets the next billing base to your latest meter reading. Does
                 not delete history.
               </p>
@@ -169,13 +184,13 @@ export default function DashboardHistorySection({
               disabled={!historyNormalized.length}
               className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Send WhatsApp
+              Send to WhatsApp
             </button>
           </div>
 
           {latestId && (
-            <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-600 dark:bg-slate-800/50">
-              <p className="mb-2 text-xs font-bold uppercase text-slate-600 dark:text-slate-400">
+            <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="mb-2 text-xs font-bold uppercase text-slate-600">
                 Edit latest reading only
               </p>
               <div className="flex flex-wrap gap-2">
@@ -183,7 +198,7 @@ export default function DashboardHistorySection({
                   type="number"
                   value={editReading}
                   onChange={(e) => onEditReadingChange(e.target.value)}
-                  className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 dark:bg-slate-900"
+                  className="rounded-lg border border-slate-200 px-3 py-2"
                 />
                 <button
                   type="button"
@@ -196,7 +211,7 @@ export default function DashboardHistorySection({
                 <button
                   type="button"
                   onClick={onDeleteLatest}
-                  className="rounded-lg border border-red-300 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400"
+                  className="rounded-lg border border-red-300 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-50"
                 >
                   Delete latest
                 </button>
@@ -204,7 +219,9 @@ export default function DashboardHistorySection({
             </div>
           )}
 
-          {historyNormalized.length === 0 ? (
+          {loading ? (
+            <TableSkeleton rows={5} />
+          ) : historyNormalized.length === 0 ? (
             <p className="py-12 text-center text-sm text-slate-500">
               No consumption rows yet.
             </p>
@@ -226,7 +243,13 @@ export default function DashboardHistorySection({
 
       {activeTab === "analytics" && (
         <div className="space-y-4 p-4">
-          {historyNormalized.length < 2 ? (
+          {loading ? (
+            <div className="space-y-4">
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
+          ) : historyNormalized.length < 2 ? (
             <p className="py-12 text-center text-sm text-slate-500">
               Add at least two entries for analytics.
             </p>

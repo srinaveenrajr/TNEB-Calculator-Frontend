@@ -1,13 +1,9 @@
 @import "tailwindcss";
 
-/* Required for Tailwind v4: `dark:` utilities when using class on <html> */
-@custom-variant dark (&:where(.dark, .dark *));
-
 :root {
   --font-sans: poppins, "DM Sans", system-ui, sans-serif;
   --app-nav-h: 3.75rem;
   --color-accent: #d97706;
-  --color-accent-dark: #fbbf24;
 }
 
 html {
@@ -15,10 +11,6 @@ html {
   color-scheme: light;
   width: 100%;
   overflow-x: hidden;
-}
-
-html.dark {
-  color-scheme: dark;
 }
 
 body {
@@ -30,11 +22,6 @@ body {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
-}
-
-.dark body {
-  background-color: #020617;
-  color: #f1f5f9;
 }
 
 #root {
@@ -69,10 +56,6 @@ button {
 button:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
-}
-
-.dark button:focus-visible {
-  outline-color: var(--color-accent-dark);
 }
 
 a {
