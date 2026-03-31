@@ -52,6 +52,11 @@ export default function Newdashboard() {
   const [calculating, setCalculating] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [activeTab, setActiveTab] = useState("table");
+  const [confirmation, setconfirmation] = useState(false);
+
+  const confirmationbutton = () => {
+    setconfirmation(true);
+  };
 
   const showToast = useCallback((msg, type = "success") => {
     setToast({ msg, type });
@@ -251,6 +256,7 @@ export default function Newdashboard() {
       await refreshUser();
       await fetchHistory();
       showToast("Billing base reset to latest reading", "success");
+      setconfirmation(false);
     } catch (e) {
       showToast(e.response?.data?.error || "Reset failed", "error");
     }
@@ -390,6 +396,8 @@ export default function Newdashboard() {
               showToast={showToast}
               phone={phone}
               onPhoneChange={setPhone}
+              confirm={confirmationbutton}
+              confirmation={confirmation}
             />
           </div>
         </div>

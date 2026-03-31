@@ -24,12 +24,14 @@ export default function DashboardHistorySection({
   chartOptions,
   showToast,
   phone,
-  onPhoneChange,
+  confirm,
+  confirmation,
 }) {
   const captureRef = useRef(null);
 
   const inlineComputedStyles = (sourceNode, targetNode) => {
-    if (!(sourceNode instanceof Element) || !(targetNode instanceof Element)) return;
+    if (!(sourceNode instanceof Element) || !(targetNode instanceof Element))
+      return;
     const computed = window.getComputedStyle(sourceNode);
     for (let i = 0; i < computed.length; i += 1) {
       const prop = computed[i];
@@ -134,31 +136,28 @@ export default function DashboardHistorySection({
 
       {activeTab === "table" && (
         <div className="p-4">
-          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-            <label className="flex flex-col text-xs font-semibold text-slate-600 dark:text-slate-400">
-              WhatsApp number (optional)
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => onPhoneChange(e.target.value)}
-                placeholder="10-digit mobile"
-                className="mt-1 w-48 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800"
-              />
-            </label>
-          </div>
-
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="rounded-xl border-2 border-red-200 bg-red-50/80 px-4 py-3 dark:border-red-900 dark:bg-red-950/40">
               <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-red-700 dark:text-red-400">
                 Danger zone
               </p>
-              <button
-                type="button"
-                onClick={onBillingReset}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-red-500"
-              >
-                Reset Log
-              </button>
+              {confirmation ? (
+                <button
+                  type="button"
+                  onClick={onBillingReset}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-red-500"
+                >
+                  Reset Log
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={confirm}
+                  className="rounded-lg bg-red-400 px-4 py-2 text-sm font-bold text-white shadow hover:bg-red-500"
+                >
+                  Do you want to reset
+                </button>
+              )}
               <p className="mt-2 max-w-md text-[10px] text-red-800/90 dark:text-red-200/80">
                 Sets the next billing base to your latest meter reading. Does
                 not delete history.

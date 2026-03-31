@@ -17,7 +17,7 @@ export default function ConsumptionHistoryTableFrozen({ rows }) {
               Total Units
             </p>
             <h2 className="text-sm md:text-4xl font-black">
-              {list[0].units} <span className="text-sm">kWh</span>
+              {list[0].units.toFixed(2)} <span className="text-sm">kWh</span>
             </h2>
           </div>
           <div className="text-right">
@@ -25,7 +25,7 @@ export default function ConsumptionHistoryTableFrozen({ rows }) {
               Current Total Bill
             </p>
             <h2 className="text-sm md:text-4xl font-black text-yellow-400">
-              ₹{list[0].billAmount}
+              ₹{list[0].billAmount.toFixed(2)}
             </h2>
           </div>
         </div>
@@ -55,7 +55,7 @@ export default function ConsumptionHistoryTableFrozen({ rows }) {
                   {r.baseLMR}
                 </td>
                 <td className="border-r-2 border-black text-black">
-                  {r.units}
+                  {r.units.toFixed(2)}
                 </td>
                 <td className="text-blue-700">
                   ₹{Number(r.billAmount).toFixed(2)}
